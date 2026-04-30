@@ -1,0 +1,32 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+
+# Runtime data files
+data/*.json
+data/*.jsonl
+data/*.pkl
+data/*.pickle
+
+# Keep data folder
+!data/.gitkeep
+
+# Ruff
+.ruff_cache/

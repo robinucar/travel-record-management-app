@@ -1,0 +1,24 @@
+#!/bin/sh
+
+commit_msg_file="$1"
+first_line="$(head -n 1 "$commit_msg_file")"
+
+pattern='^[A-Z][A-Za-z0-9 /-]*: [A-Z].*\.$'
+
+if ! echo "$first_line" | grep -Eq "$pattern"; then
+  echo "Invalid commit message."
+  echo ""
+  echo "Commit message must follow this format:"
+  echo "  Subsystem: Short present tense sentence."
+  echo ""
+  echo "Examples:"
+  echo "  Project: Initialise repository structure."
+  echo "  Tests: Add storage unit tests."
+  echo "  Docs: Add project setup notes."
+  echo ""
+  echo "Rules:"
+  echo "  - Start with a subsystem prefix followed by a colon."
+  echo "  - Use a capital letter after the colon."
+  echo "  - End the first line with a period."
+  exit 1
+fi
