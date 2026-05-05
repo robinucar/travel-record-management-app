@@ -82,6 +82,7 @@ A flight record will contain the following fields:
 
 | Field      | Type      |
 | ---------- | --------- |
+| ID         | Integer   |
 | Client ID  | Integer   |
 | Airline ID | Integer   |
 | Date       | Date/time |
