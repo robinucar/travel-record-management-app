@@ -2,7 +2,7 @@
 
 import pytest
 
-from record_management_system.records import create_record, get_records
+from record_management_system.records import create_record, get_records, update_record
 
 
 def test_create_client_record_adds_record_to_records_list():
@@ -278,3 +278,96 @@ def test_get_records_returns_copy_of_records():
             "company_name": "British Airways",
         }
     ]
+def test_update_client_record_changes_existing_record():
+    records = [
+        {
+            "id": 1,
+            "type": "client",
+            "name": "John Smith",
+            "address_line_1": "10 Example Street",
+            "address_line_2": "",
+            "address_line_3": "",
+            "city": "London",
+            "state": "",
+            "zip_code": "SW1A 1AA",
+            "country": "United Kingdom",
+            "phone_number": "07123456789",
+        }
+    ]
+
+    updated_record = update_record(
+        records,
+        1,
+        {
+            "name": "Jane Smith",
+            "city": "Manchester",
+            "phone_number": "07987654321",
+        },
+    )
+
+    assert updated_record["name"] == "Jane Smith"
+    assert updated_record["city"] == "Manchester"
+    assert updated_record["phone_number"] == "07987654321"
+    assert records[0]["name"] == "Jane Smith"
+
+
+def test_update_record_raises_error_when_record_not_found():
+    records = [
+        {
+            "id": 1,
+            "type": "airline",
+            "company_name": "British Airways",
+        }
+    ]
+
+    with pytest.raises(ValueError, match="Record not found"):
+        update_record(records, 99, {"company_name": "Virgin Atlantic"})
+
+
+def test_update_record_raises_error_when_id_is_changed():
+    records = [
+        {
+            "id": 1,
+            "type": "airline",
+            "company_name": "British Airways",
+        }
+    ]
+
+    with pytest.raises(ValueError, match="Record ID cannot be updated"):
+        update_record(records, 1, {"id": 2})
+
+
+def test_update_record_raises_error_when_type_is_changed():
+    records = [
+        {
+            "id": 1,
+            "type": "airline",
+            "company_name": "British Airways",
+        }
+    ]
+
+    with pytest.raises(ValueError, match="Record type cannot be updated"):
+        update_record(records, 1, {"type": "client"})
+
+
+def test_update_record_raises_error_when_required_field_is_empty():
+    records = [
+        {
+            "id": 1,
+            "type": "client",
+            "name": "John Smith",
+            "address_line_1": "10 Example Street",
+            "address_line_2": "",
+            "address_line_3": "",
+            "city": "London",
+            "state": "",
+            "zip_code": "SW1A 1AA",
+            "country": "United Kingdom",
+            "phone_number": "07123456789",
+        }
+    ]
+
+    with pytest.raises(ValueError, match="Missing required field: name"):
+        update_record(records, 1, {"name": ""})
+
+    assert records[0]["name"] == "John Smith"
