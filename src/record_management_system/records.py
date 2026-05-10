@@ -48,6 +48,33 @@ def get_records(records: list[dict]) -> list[dict]:
     """Return a copy of all records."""
     return records.copy()
 
+def update_record(
+    records: list[dict],
+    record_id: int,
+    updated_fields: dict,
+) -> dict:
+    """Update an existing record by ID and return the updated record."""
+
+    if not updated_fields:
+        raise ValueError("No fields provided to update")
+
+    if "id" in updated_fields:
+        raise ValueError("Record ID cannot be updated")
+
+    if "type" in updated_fields:
+        raise ValueError("Record type cannot be updated")
+
+    for record in records:
+        if record["id"] == record_id:
+            updated_record = record.copy()
+            updated_record.update(updated_fields)
+
+            validate_required_fields(updated_record)
+
+            record.update(updated_fields)
+            return record
+
+    raise ValueError("Record not found")
 
 def validate_required_fields(record: dict) -> None:
     """Validate required fields for the record type."""
