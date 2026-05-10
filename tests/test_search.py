@@ -2,7 +2,7 @@
 
 import pytest
 
-from record_management_system.search_records import search_records
+from record_management_system.records import search_records
 
 
 def test_search_records_by_id_returns_matching_record():
@@ -70,27 +70,35 @@ def test_search_records_returns_empty_list_when_no_match_found():
     assert result == []
 
 
-def test_search_records_returns_empty_list_for_invalid_field():
-    """Return an empty list when the search field is not allowed."""
+def test_search_records_raises_error_for_invalid_field():
+    """Raise an error when the search field is not allowed."""
     records = [
         {"id": 1, "type": "client", "name": "John Smith"},
     ]
 
-    result = search_records(records, "invalid_field", "John Smith")
+    with pytest.raises(ValueError, match="Invalid search field"):
+        search_records(records, "invalid_field", "John Smith")
 
-    assert result == []
 
-
-def test_search_records_returns_empty_list_for_empty_value():
-    """Return an empty list when the search value is empty."""
+def test_search_records_raises_error_for_empty_value():
+    """Raise an error when the search value is empty."""
     records = [
         {"id": 1, "type": "client", "name": "John Smith"},
     ]
 
-    result = search_records(records, "name", "")
+    with pytest.raises(ValueError, match="Search value cannot be empty"):
+        search_records(records, "name", "")
 
-    assert result == []
+def test_search_records_returns_copy_of_matching_record():
+    """Return a copy so search results cannot mutate original records."""
+    records = [
+        {"id": 1, "type": "client", "name": "John Smith"},
+    ]
 
+    result = search_records(records, "id", 1)
+    result[0]["name"] = "Changed Name"
+
+    assert records[0]["name"] == "John Smith"
 
 def test_search_records_is_case_insensitive():
     """Return matching records regardless of letter case."""
