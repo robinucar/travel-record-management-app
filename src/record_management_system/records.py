@@ -29,6 +29,26 @@ REQUIRED_FIELDS_BY_RECORD_TYPE = {
     },
 }
 
+ALLOWED_SEARCH_FIELDS = {
+    "id",
+    "type",
+    "name",
+    "company_name",
+    "client_id",
+    "airline_id",
+    "date",
+    "start_city",
+    "end_city",
+    "city",
+    "country",
+    "phone_number",
+    "address_line_1",
+    "address_line_2",
+    "address_line_3",
+    "state",
+    "zip_code",
+}
+
 
 def create_record(records: list[dict], record: dict) -> dict:
     """Add a new record to the records list and return it."""
@@ -48,6 +68,28 @@ def get_records(records: list[dict]) -> list[dict]:
     """Return a copy of all records."""
     return records.copy()
 
+def search_records(
+    records: list[dict],
+    field: str,
+    value: object,
+) -> list[dict]:
+    """Search records by an allowed field and value."""
+    if field not in ALLOWED_SEARCH_FIELDS:
+        raise ValueError("Invalid search field")
+
+    if not str(value).strip():
+        raise ValueError("Search value cannot be empty")
+
+    search_value = str(value).lower().strip()
+    matching_records = []
+
+    for record in records:
+        record_value = str(record.get(field, "")).lower().strip()
+
+        if record_value == search_value:
+            matching_records.append(record.copy())
+
+    return matching_records
 
 def validate_required_fields(record: dict) -> None:
     """Validate required fields for the record type."""
