@@ -2,6 +2,35 @@
 
 VALID_RECORD_TYPES = {"client", "airline", "flight"}
 
+ALLOWED_FIELDS_BY_RECORD_TYPE = {
+    "client": {
+        "id",
+        "type",
+        "name",
+        "address_line_1",
+        "address_line_2",
+        "address_line_3",
+        "city",
+        "state",
+        "zip_code",
+        "country",
+        "phone_number",
+    },
+    "airline": {
+        "id",
+        "type",
+        "company_name",
+    },
+    "flight": {
+        "id",
+        "type",
+        "client_id",
+        "airline_id",
+        "date",
+        "start_city",
+        "end_city",
+    },
+}
 REQUIRED_FIELDS_BY_RECORD_TYPE = {
     "client": {
         "id",
@@ -53,7 +82,7 @@ def update_record(
     record_id: int,
     updated_fields: dict,
 ) -> dict:
-    """Update an existing record by ID and return the updated record."""
+    """Update an existing record by ID and return a copy of the updated record."""
 
     if not updated_fields:
         raise ValueError("No fields provided to update")
@@ -66,13 +95,23 @@ def update_record(
 
     for record in records:
         if record["id"] == record_id:
+            record_type = record["type"]
+            allowed_fields = ALLOWED_FIELDS_BY_RECORD_TYPE[record_type]
+            invalid_fields = set(updated_fields) - allowed_fields
+
+            if invalid_fields:
+                invalid_field = sorted(invalid_fields)[0]
+                raise ValueError(
+                    f"Invalid field for {record_type} record: {invalid_field}"
+                )
+
             updated_record = record.copy()
             updated_record.update(updated_fields)
 
             validate_required_fields(updated_record)
 
             record.update(updated_fields)
-            return record
+            return record.copy()
 
     raise ValueError("Record not found")
 
