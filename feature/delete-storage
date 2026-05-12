@@ -1,9 +1,0 @@
-travel-record-management-app/
-│
-├── main.py
-├── records.json
-├── storage.py
-├── delete_records.py
-├── tests/
-│   ├── test_delete.py
-│   └── test_storage.py
