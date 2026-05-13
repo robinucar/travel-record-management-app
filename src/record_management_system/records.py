@@ -2,6 +2,36 @@
 
 VALID_RECORD_TYPES = {"client", "airline", "flight"}
 
+ALLOWED_FIELDS_BY_RECORD_TYPE = {
+    "client": {
+        "id",
+        "type",
+        "name",
+        "address_line_1",
+        "address_line_2",
+        "address_line_3",
+        "city",
+        "state",
+        "zip_code",
+        "country",
+        "phone_number",
+    },
+    "airline": {
+        "id",
+        "type",
+        "company_name",
+    },
+    "flight": {
+        "id",
+        "type",
+        "client_id",
+        "airline_id",
+        "date",
+        "start_city",
+        "end_city",
+    },
+}
+
 REQUIRED_FIELDS_BY_RECORD_TYPE = {
     "client": {
         "id",
@@ -29,9 +59,30 @@ REQUIRED_FIELDS_BY_RECORD_TYPE = {
     },
 }
 
+ALLOWED_SEARCH_FIELDS = {
+    "id",
+    "type",
+    "name",
+    "company_name",
+    "client_id",
+    "airline_id",
+    "date",
+    "start_city",
+    "end_city",
+    "city",
+    "country",
+    "phone_number",
+    "address_line_1",
+    "address_line_2",
+    "address_line_3",
+    "state",
+    "zip_code",
+}
+
 
 def create_record(records: list[dict], record: dict) -> dict:
     """Add a new record to the records list and return it."""
+
     record_type = record.get("type")
 
     if record_type not in VALID_RECORD_TYPES:
@@ -46,11 +97,77 @@ def create_record(records: list[dict], record: dict) -> dict:
 
 def get_records(records: list[dict]) -> list[dict]:
     """Return a copy of all records."""
+
     return records.copy()
+
+
+def search_records(
+    records: list[dict],
+    field: str,
+    value: object,
+) -> list[dict]:
+    """Search records by an allowed field and value."""
+
+    if field not in ALLOWED_SEARCH_FIELDS:
+        raise ValueError("Invalid search field")
+
+    if not str(value).strip():
+        raise ValueError("Search value cannot be empty")
+
+    search_value = str(value).lower().strip()
+    matching_records = []
+
+    for record in records:
+        record_value = str(record.get(field, "")).lower().strip()
+
+        if record_value == search_value:
+            matching_records.append(record.copy())
+
+    return matching_records
+
+
+def update_record(
+    records: list[dict],
+    record_id: int,
+    updated_fields: dict,
+) -> dict:
+    """Update an existing record by ID and return a copy of the updated record."""
+
+    if not updated_fields:
+        raise ValueError("No fields provided to update")
+
+    if "id" in updated_fields:
+        raise ValueError("Record ID cannot be updated")
+
+    if "type" in updated_fields:
+        raise ValueError("Record type cannot be updated")
+
+    for record in records:
+        if record["id"] == record_id:
+            record_type = record["type"]
+            allowed_fields = ALLOWED_FIELDS_BY_RECORD_TYPE[record_type]
+            invalid_fields = set(updated_fields) - allowed_fields
+
+            if invalid_fields:
+                invalid_field = sorted(invalid_fields)[0]
+                raise ValueError(
+                    f"Invalid field for {record_type} record: {invalid_field}"
+                )
+
+            updated_record = record.copy()
+            updated_record.update(updated_fields)
+
+            validate_required_fields(updated_record)
+
+            record.update(updated_fields)
+            return record.copy()
+
+    raise ValueError("Record not found")
 
 
 def validate_required_fields(record: dict) -> None:
     """Validate required fields for the record type."""
+
     record_type = record["type"]
     required_fields = REQUIRED_FIELDS_BY_RECORD_TYPE[record_type]
 
@@ -61,6 +178,7 @@ def validate_required_fields(record: dict) -> None:
 
 def ensure_unique_id(records: list[dict], record_id: int) -> None:
     """Ensure that the record ID is unique."""
+
     for existing_record in records:
         if existing_record["id"] == record_id:
             raise ValueError("Record with this ID already exists")
