@@ -33,6 +33,33 @@ FIELDS_BY_RECORD_TYPE = {
 }
 
 
+def format_record_for_display(record: dict) -> str:
+    """Format a record for display in the records list."""
+    record_type = record["type"].title()
+    record_id = record["id"]
+
+    if record["type"] == "client":
+        return (
+            f"{record_type} | ID: {record_id} | "
+            f"Name: {record['name']} | "
+            f"City: {record['city']} | "
+            f"Country: {record['country']}"
+        )
+
+    if record["type"] == "airline":
+        return (
+            f"{record_type} | ID: {record_id} | " f"Company: {record['company_name']}"
+        )
+
+    return (
+        f"{record_type} | ID: {record_id} | "
+        f"Client ID: {record['client_id']} | "
+        f"Airline ID: {record['airline_id']} | "
+        f"{record['start_city']} to {record['end_city']} | "
+        f"Date: {record['date']}"
+    )
+
+
 def create_main_window() -> tk.Tk:
     """Create and configure the main application window."""
     window = tk.Tk()
@@ -94,33 +121,6 @@ def create_main_window() -> tk.Tk:
             entry.pack(fill="x", pady=(2, 8))
 
             field_entries[field_name] = entry
-
-    def format_record_for_display(record: dict) -> str:
-        """Format a record for display in the records list."""
-        record_type = record["type"].title()
-        record_id = record["id"]
-
-        if record["type"] == "client":
-            return (
-                f"{record_type} | ID: {record_id} | "
-                f"Name: {record['name']} | "
-                f"City: {record['city']} | "
-                f"Country: {record['country']}"
-            )
-
-        if record["type"] == "airline":
-            return (
-                f"{record_type} | ID: {record_id} | "
-                f"Company: {record['company_name']}"
-            )
-
-        return (
-            f"{record_type} | ID: {record_id} | "
-            f"Client ID: {record['client_id']} | "
-            f"Airline ID: {record['airline_id']} | "
-            f"{record['start_city']} to {record['end_city']} | "
-            f"Date: {record['date']}"
-        )
 
     def refresh_records_display() -> None:
         """Refresh the records display list."""
