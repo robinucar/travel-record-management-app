@@ -67,6 +67,9 @@ def ensure_unique_id(records: list[dict], record_id: int) -> None:
 
 def delete_record(records: list[dict], record_id: int) -> dict:
     """Delete a record by ID and return the deleted record."""
+    if not records:
+        raise ValueError("Records are empty, none to delete")
+
     for index, record in enumerate(records):
         if record.get("id") == record_id:
             return records.pop(index)

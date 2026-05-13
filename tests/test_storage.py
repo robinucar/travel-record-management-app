@@ -18,6 +18,12 @@ def test_save_records_writes_records_to_file(tmp_path):
 
     assert file_path.exists()
 
+    with file_path.open(encoding="utf-8") as file:
+        saved_records = json.load(file)
+
+        assert saved_records == records
+
+
 
 def test_load_records_returns_saved_records(tmp_path):
     """Load saved records from a JSON file."""
@@ -62,3 +68,10 @@ def test_load_records_raises_error_when_json_is_not_a_list(tmp_path):
 
     with pytest.raises(ValueError, match="Records file must contain a list"):
         load_records(file_path)
+
+def test_save_records_raises_error_when_records_is_not_a_list(tmp_path):
+    """Raise an error when saving data that is not a list."""
+    file_path = tmp_path / "records.json"
+
+    with pytest.raises(ValueError, match="Records must be a list"):
+        save_records({"id": 1, "type": "client"}, file_path)

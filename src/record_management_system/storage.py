@@ -12,8 +12,12 @@ def load_records(file_path: str | Path) -> list[dict]:
     if not path.exists():
         return []
 
-    with path.open(encoding="utf-8") as file:
-        records = json.load(file)
+    # Catch JSONDecodeError in the case of invalid JSON file
+    try:
+        with path.open(encoding="utf-8") as file:
+         records = json.load(file)
+    except json.JSONDecodeError as error:
+        raise ValueError("Records file contains invalid JSON") from error
 
     # Validate expected structure
     if not isinstance(records, list):
@@ -24,6 +28,9 @@ def load_records(file_path: str | Path) -> list[dict]:
 
 def save_records(records: list[dict], file_path: str | Path) -> None:
     """Save records to a JSON file."""
+    if not isinstance(records,list):
+        raise ValueError("Records must be a list")
+
     path = Path(file_path)
 
     # Create parent directories if they do not exist

@@ -2,7 +2,7 @@
 
 import pytest
 
-from record_management_system.records import create_record, get_records
+from record_management_system.records import create_record, delete_record, get_records
 
 
 def test_create_client_record_adds_record_to_records_list():
@@ -278,3 +278,51 @@ def test_get_records_returns_copy_of_records():
             "company_name": "British Airways",
         }
     ]
+
+def test_delete_record_removes_existing_record():
+    """Delete an existing record from the records list."""
+    records = [
+        {"id": 1, "type": "client", "name": "John Smith"},
+        {"id": 2, "type": "airline", "company_name": "British Airways"},
+    ]
+
+    deleted_record = delete_record(records, 1)
+
+    assert deleted_record == {
+        "id": 1,
+        "type": "client",
+        "name": "John Smith",
+    }
+
+    assert records == [
+        {
+            "id": 2,
+            "type": "airline",
+            "company_name": "British Airways",
+        }
+    ]
+
+
+def test_delete_record_raises_error_when_record_not_found():
+    """Raise an error when trying to delete a non-existing record."""
+    records = [
+        {"id": 1, "type": "client", "name": "John Smith"},
+    ]
+
+    with pytest.raises(ValueError, match="Record not found"):
+        delete_record(records, 22)
+
+    assert records == [
+        {
+            "id": 1,
+            "type": "client",
+            "name": "John Smith",
+        }
+    ]
+
+def test_delete_record_empty_list_raises_error():
+    """Raise an error when trying to delete from an empty records list."""
+    records = []
+
+    with pytest.raises(ValueError, match="Records are empty, none to delete"):
+        delete_record(records, 22)
