@@ -182,3 +182,14 @@ def ensure_unique_id(records: list[dict], record_id: int) -> None:
     for existing_record in records:
         if existing_record["id"] == record_id:
             raise ValueError("Record with this ID already exists")
+
+def delete_record(records: list[dict], record_id: int) -> dict:
+    """Delete a record by ID and return the deleted record."""
+    if not records:
+        raise ValueError("Records are empty, none to delete")
+
+    for index, record in enumerate(records):
+        if record.get("id") == record_id:
+            return records.pop(index)
+
+    raise ValueError("Record not found")
