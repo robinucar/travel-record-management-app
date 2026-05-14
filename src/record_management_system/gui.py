@@ -3,7 +3,11 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 
-from record_management_system.records import create_record, get_records
+from record_management_system.records import (
+    REQUIRED_FIELDS_BY_RECORD_TYPE,
+    create_record,
+    get_records,
+)
 
 FIELDS_BY_RECORD_TYPE = {
     "Client": [
@@ -32,32 +36,43 @@ FIELDS_BY_RECORD_TYPE = {
     ],
 }
 
+FIELD_LABELS = {
+    "id": "ID",
+    "type": "Type",
+    "name": "Name",
+    "address_line_1": "Address Line 1",
+    "address_line_2": "Address Line 2",
+    "address_line_3": "Address Line 3",
+    "city": "City",
+    "state": "State",
+    "zip_code": "Zip Code",
+    "country": "Country",
+    "phone_number": "Phone Number",
+    "company_name": "Company Name",
+    "client_id": "Client ID",
+    "airline_id": "Airline ID",
+    "date": "Date",
+    "start_city": "Start City",
+    "end_city": "End City",
+}
+
 
 def format_record_for_display(record: dict) -> str:
     """Format a record for display in the records list."""
-    record_type = record["type"].title()
-    record_id = record["id"]
+    record_type = record["type"]
+    display_fields = FIELDS_BY_RECORD_TYPE[record_type.title()]
+    required_fields = REQUIRED_FIELDS_BY_RECORD_TYPE[record_type]
 
-    if record["type"] == "client":
-        return (
-            f"{record_type} | ID: {record_id} | "
-            f"Name: {record['name']} | "
-            f"City: {record['city']} | "
-            f"Country: {record['country']}"
-        )
+    display_parts = [record_type.title()]
 
-    if record["type"] == "airline":
-        return (
-            f"{record_type} | ID: {record_id} | " f"Company: {record['company_name']}"
-        )
+    for field_name in display_fields:
+        value = record.get(field_name, "")
 
-    return (
-        f"{record_type} | ID: {record_id} | "
-        f"Client ID: {record['client_id']} | "
-        f"Airline ID: {record['airline_id']} | "
-        f"{record['start_city']} to {record['end_city']} | "
-        f"Date: {record['date']}"
-    )
+        if field_name in required_fields or str(value).strip():
+            label = FIELD_LABELS[field_name]
+            display_parts.append(f"{label}: {value}")
+
+    return " | ".join(display_parts)
 
 
 def create_main_window() -> tk.Tk:
@@ -114,7 +129,7 @@ def create_main_window() -> tk.Tk:
         selected_record_type = record_type_combo.get()
 
         for field_name in FIELDS_BY_RECORD_TYPE[selected_record_type]:
-            label = ttk.Label(fields_frame, text=field_name.replace("_", " ").title())
+            label = ttk.Label(fields_frame, text=FIELD_LABELS[field_name])
             label.pack(anchor="w")
 
             entry = ttk.Entry(fields_frame)
