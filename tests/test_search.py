@@ -127,3 +127,14 @@ def test_search_records_ignores_extra_spaces(field, value):
     result = search_records(records, field, value)
 
     assert result == [{"id": 1, "type": "client", "name": "John Smith"}]
+
+
+def test_search_records_supports_partial_match():
+    """Return records when the search value partially matches the field."""
+    records = [
+        {"id": 1, "type": "client", "name": "John Smith"},
+    ]
+
+    result = search_records(records, "name", "John")
+
+    assert result == [{"id": 1, "type": "client", "name": "John Smith"}]

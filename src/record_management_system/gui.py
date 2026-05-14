@@ -3,7 +3,7 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 
-from record_management_system.records import create_record, get_records
+from record_management_system.records import create_record, get_records, search_records
 
 FIELDS_BY_RECORD_TYPE = {
     "Client": [
@@ -64,8 +64,8 @@ def create_main_window() -> tk.Tk:
     """Create and configure the main application window."""
     window = tk.Tk()
     window.title("Travel Record Management App")
-    window.geometry("900x600")
-    window.minsize(700, 500)
+    window.geometry("1000x850")
+    window.minsize(900, 800)
 
     records: list[dict] = []
 
@@ -160,6 +160,31 @@ def create_main_window() -> tk.Tk:
         except ValueError as error:
             messagebox.showerror("Invalid record", str(error))
 
+    def handle_search_records() -> None:
+        """Search records and display matching results."""
+        field = search_field_combo.get()
+        value = search_value_entry.get().strip()
+
+        try:
+            results = search_records(records, field, value)
+        except ValueError as error:
+            messagebox.showerror("Invalid search", str(error))
+            return
+
+        records_list.delete(0, tk.END)
+
+        if not results:
+            messagebox.showinfo("No results", "No matching records found.")
+            return
+
+        for record in results:
+            records_list.insert(tk.END, format_record_for_display(record))
+
+    def handle_clear_search() -> None:
+        """Clear search input and show all records."""
+        search_value_entry.delete(0, tk.END)
+        refresh_records_display()
+
     record_type_combo.bind("<<ComboboxSelected>>", lambda _event: render_form_fields())
 
     render_form_fields()
@@ -170,6 +195,60 @@ def create_main_window() -> tk.Tk:
         command=handle_create_record,
     )
     save_button.pack(fill="x", pady=(4, 0))
+
+    #Search Records Section
+    search_frame = ttk.LabelFrame(records_frame, text="Search Records", padding=8)
+    search_frame.pack(fill="x", pady=(0, 12))
+
+    search_field_label = ttk.Label(search_frame, text="Search Field")
+    search_field_label.pack(anchor="w")
+
+    search_field_combo = ttk.Combobox(
+        search_frame,
+        values=[
+            "id",
+            "type",
+            "name",
+            "company_name",
+            "client_id",
+            "airline_id",
+            "date",
+            "start_city",
+            "end_city",
+            "city",
+            "country",
+            "phone_number",
+            "address_line_1",
+            "address_line_2",
+            "address_line_3",
+            "state",
+            "zip_code",
+        ],
+        state="readonly",
+    )
+
+    search_field_combo.set("id")
+    search_field_combo.pack(fill="x", pady=(2, 8))
+
+    search_value_label = ttk.Label(search_frame, text="Search Value")
+    search_value_label.pack(anchor="w")
+
+    search_value_entry = ttk.Entry(search_frame)
+    search_value_entry.pack(fill="x", pady=(2, 8))
+
+    search_button = ttk.Button(
+        search_frame,
+        text="Search",
+        command=handle_search_records,
+    )
+    search_button.pack(fill="x", pady=(0, 4))
+
+    clear_search_button = ttk.Button(
+        search_frame,
+        text="Clear Search",
+        command=handle_clear_search,
+    )
+    clear_search_button.pack(fill="x")
 
     records_list = tk.Listbox(records_frame)
     records_list.pack(fill="both", expand=True)

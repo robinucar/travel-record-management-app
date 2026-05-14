@@ -79,6 +79,7 @@ ALLOWED_SEARCH_FIELDS = {
     "zip_code",
 }
 
+EXACT_MATCH_FIELDS = {"id", "client_id", "airline_id"}
 
 def create_record(records: list[dict], record: dict) -> dict:
     """Add a new record to the records list and return it."""
@@ -120,7 +121,12 @@ def search_records(
     for record in records:
         record_value = str(record.get(field, "")).lower().strip()
 
-        if record_value == search_value:
+        if field in EXACT_MATCH_FIELDS:
+            is_match = record_value == search_value
+        else:
+            is_match = search_value in record_value
+
+        if is_match:
             matching_records.append(record.copy())
 
     return matching_records
