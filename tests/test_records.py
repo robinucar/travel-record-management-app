@@ -120,7 +120,7 @@ def test_create_record_raises_error_for_invalid_record_type():
     with pytest.raises(ValueError, match="Invalid record type"):
         create_record(records, invalid_record)
 
-    assert records == []
+    assert not records
 
 
 def test_create_client_record_raises_error_when_required_field_is_missing():
@@ -143,7 +143,7 @@ def test_create_client_record_raises_error_when_required_field_is_missing():
     with pytest.raises(ValueError, match="Missing required field: name"):
         create_record(records, invalid_client_record)
 
-    assert records == []
+    assert not records
 
 
 def test_create_airline_record_raises_error_when_required_field_is_missing():
@@ -158,7 +158,7 @@ def test_create_airline_record_raises_error_when_required_field_is_missing():
     with pytest.raises(ValueError, match="Missing required field: company_name"):
         create_record(records, invalid_airline_record)
 
-    assert records == []
+    assert not records
 
 
 def test_create_flight_record_raises_error_when_required_field_is_missing():
@@ -177,7 +177,7 @@ def test_create_flight_record_raises_error_when_required_field_is_missing():
     with pytest.raises(ValueError, match="Missing required field: end_city"):
         create_record(records, invalid_flight_record)
 
-    assert records == []
+    assert not records
 
 
 def test_create_record_raises_error_when_id_already_exists():
@@ -253,7 +253,7 @@ def test_create_client_record_raises_error_when_required_field_is_empty():
     with pytest.raises(ValueError, match="Missing required field: name"):
         create_record(records, invalid_client_record)
 
-    assert records == []
+    assert not records
 
 
 def test_get_records_returns_copy_of_records():
@@ -283,6 +283,122 @@ def test_get_records_returns_copy_of_records():
             "company_name": "British Airways",
         }
     ]
+
+
+def test_create_client_record_raises_error_when_phone_number_contains_letters():
+    """Raise an error when phone number contains letters."""
+    records = []
+
+    invalid_client_record = {
+        "id": 1,
+        "type": "client",
+        "name": "John Smith",
+        "address_line_1": "10 Example Street",
+        "address_line_2": "",
+        "address_line_3": "",
+        "city": "London",
+        "state": "",
+        "zip_code": "SW1A 1AA",
+        "country": "United Kingdom",
+        "phone_number": "07123abc789",
+    }
+
+    with pytest.raises(ValueError, match="Phone number must contain only digits"):
+        create_record(records, invalid_client_record)
+
+    assert not records
+
+
+def test_create_client_record_accepts_phone_number_with_plus_prefix():
+    """Create a client record when phone number starts with plus."""
+    records = []
+
+    client_record = {
+        "id": 1,
+        "type": "client",
+        "name": "John Smith",
+        "address_line_1": "10 Example Street",
+        "address_line_2": "",
+        "address_line_3": "",
+        "city": "London",
+        "state": "",
+        "zip_code": "SW1A 1AA",
+        "country": "United Kingdom",
+        "phone_number": "+447123456789",
+    }
+
+    created_record = create_record(records, client_record)
+
+    assert created_record == client_record
+    assert records == [client_record]
+
+
+def test_create_client_record_accepts_phone_number_with_double_zero_prefix():
+    """Create a client record when phone number starts with double zero."""
+    records = []
+
+    client_record = {
+        "id": 1,
+        "type": "client",
+        "name": "John Smith",
+        "address_line_1": "10 Example Street",
+        "address_line_2": "",
+        "address_line_3": "",
+        "city": "London",
+        "state": "",
+        "zip_code": "SW1A 1AA",
+        "country": "United Kingdom",
+        "phone_number": "00447123456789",
+    }
+
+    created_record = create_record(records, client_record)
+
+    assert created_record == client_record
+    assert records == [client_record]
+
+
+def test_create_flight_record_raises_error_when_date_format_is_invalid():
+    """Raise an error when flight date is not in YYYY-MM-DD format."""
+    records = []
+
+    invalid_flight_record = {
+        "id": 3,
+        "type": "flight",
+        "client_id": 1,
+        "airline_id": 2,
+        "date": "14/05/2026",
+        "start_city": "London",
+        "end_city": "Paris",
+    }
+
+    with pytest.raises(ValueError, match="Date must use YYYY-MM-DD format"):
+        create_record(records, invalid_flight_record)
+
+    assert not records
+
+
+def test_create_client_record_raises_error_when_required_field_is_whitespace():
+    """Raise an error when a required field only contains whitespace."""
+    records = []
+
+    invalid_client_record = {
+        "id": 1,
+        "type": "client",
+        "name": "   ",
+        "address_line_1": "10 Example Street",
+        "address_line_2": "",
+        "address_line_3": "",
+        "city": "London",
+        "state": "",
+        "zip_code": "SW1A 1AA",
+        "country": "United Kingdom",
+        "phone_number": "07123456789",
+    }
+
+    with pytest.raises(ValueError, match="Missing required field: name"):
+        create_record(records, invalid_client_record)
+
+    assert not records
 
 
 def test_update_client_record_changes_existing_record():
@@ -546,4 +662,3 @@ def test_delete_record_empty_list_raises_error():
 
     with pytest.raises(ValueError, match="Records are empty, none to delete"):
         delete_record(records, 22)
-
