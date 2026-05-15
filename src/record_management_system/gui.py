@@ -1,15 +1,23 @@
 """Graphical user interface for the record management application."""
 
 import tkinter as tk
+from pathlib import Path
 from tkinter import messagebox, ttk
 
 from record_management_system.records import (
     ALLOWED_SEARCH_FIELDS,
     REQUIRED_FIELDS_BY_RECORD_TYPE,
     create_record,
+    delete_record,
     get_records,
     search_records,
 )
+from record_management_system.storage import (
+    load_records,
+    save_records,
+)
+
+DATA_FILE_PATH = Path("data/records.json")
 
 FIELDS_BY_RECORD_TYPE = {
     "Client": [
@@ -84,7 +92,9 @@ def create_main_window() -> tk.Tk:
     window.geometry("1000x850")
     window.minsize(900, 800)
 
-    records: list[dict] = []
+    records: list[dict] = load_records(DATA_FILE_PATH)
+
+    has_unsaved_changes = False
 
     main_frame = ttk.Frame(window, padding=16)
     main_frame.pack(fill="both", expand=True)
@@ -153,6 +163,8 @@ def create_main_window() -> tk.Tk:
 
     def handle_create_record() -> None:
         """Create a record from the form values and refresh the display."""
+        nonlocal has_unsaved_changes
+
         selected_record_type = record_type_combo.get()
 
         record = {
@@ -169,6 +181,9 @@ def create_main_window() -> tk.Tk:
                     record[field_name] = value
 
             create_record(records, record)
+
+            has_unsaved_changes = True
+
             refresh_records_display()
             clear_form_fields()
 
@@ -205,6 +220,69 @@ def create_main_window() -> tk.Tk:
     record_type_combo.bind("<<ComboboxSelected>>", lambda _event: render_form_fields())
 
     render_form_fields()
+
+    def handle_delete_record() -> None:
+        """Delete the selected record after user confirmation."""
+        nonlocal has_unsaved_changes
+
+        selected_indices = records_list.curselection()
+
+        if not selected_indices:
+            messagebox.showerror("No selection", "Please select a record to delete.")
+            return
+
+        selected_index = selected_indices[0]
+        selected_record = get_records(records)[selected_index]
+        record_id = selected_record["id"]
+
+        confirmed = messagebox.askyesno(
+            "Confirm delete",
+            "Are you sure you want to delete this record?",
+        )
+
+        if not confirmed:
+            return
+
+        try:
+            delete_record(records, record_id)
+        except ValueError as error:
+            messagebox.showerror("Delete failed", str(error))
+            return
+
+        has_unsaved_changes = True
+
+        refresh_records_display()
+        messagebox.showinfo("Deleted", "Record deleted successfully.")
+
+    def handle_save_records() -> None:
+        """Save records to the data file."""
+        nonlocal has_unsaved_changes
+
+        save_records(records, DATA_FILE_PATH)
+
+        has_unsaved_changes = False
+
+        messagebox.showinfo("Saved", "Records saved successfully.")
+
+    def handle_window_close() -> None:
+        """Close the application, prompting only if there are unsaved changes."""
+        if not has_unsaved_changes:
+            window.destroy()
+            return
+
+        should_save = messagebox.askyesnocancel(
+            "Unsaved changes",
+            "Do you want to save changes before closing?",
+        )
+
+        if should_save is None:
+            return
+
+        if should_save:
+            save_records(records, DATA_FILE_PATH)
+
+        window.destroy()
+
 
     save_button = ttk.Button(
         form_frame,
@@ -251,6 +329,21 @@ def create_main_window() -> tk.Tk:
     records_list = tk.Listbox(records_frame)
     records_list.pack(fill="both", expand=True)
 
+    delete_button = ttk.Button(
+        records_frame,
+        text="Delete Selected Record",
+        command=handle_delete_record,
+    )
+    delete_button.pack(fill="x", pady=(8, 0))
+
+    save_records_button = ttk.Button(
+        records_frame,
+        text="Save Records",
+        command=handle_save_records,
+    )
+    save_records_button.pack(fill="x", pady=(8, 0))
+
     refresh_records_display()
 
+    window.protocol("WM_DELETE_WINDOW", handle_window_close)
     return window
