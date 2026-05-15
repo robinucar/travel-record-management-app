@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from record_management_system.records import (
+    ALLOWED_SEARCH_FIELDS,
     REQUIRED_FIELDS_BY_RECORD_TYPE,
     create_record,
     get_records,
@@ -212,7 +213,6 @@ def create_main_window() -> tk.Tk:
     )
     save_button.pack(fill="x", pady=(4, 0))
 
-    #Search records Section
     search_frame = ttk.LabelFrame(records_frame, text="Search Records", padding=8)
     search_frame.pack(fill="x", pady=(0, 12))
 
@@ -221,25 +221,7 @@ def create_main_window() -> tk.Tk:
 
     search_field_combo = ttk.Combobox(
         search_frame,
-        values=[
-            "id",
-            "type",
-            "name",
-            "company_name",
-            "client_id",
-            "airline_id",
-            "date",
-            "start_city",
-            "end_city",
-            "city",
-            "country",
-            "phone_number",
-            "address_line_1",
-            "address_line_2",
-            "address_line_3",
-            "state",
-            "zip_code",
-        ],
+        values=sorted(ALLOWED_SEARCH_FIELDS),
         state="readonly",
     )
 
