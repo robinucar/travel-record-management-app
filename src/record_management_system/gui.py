@@ -92,8 +92,13 @@ def create_main_window() -> tk.Tk:
     window.geometry("1000x850")
     window.minsize(900, 800)
 
-    records: list[dict] = load_records(DATA_FILE_PATH)
+    try:
+        records: list[dict] = load_records(DATA_FILE_PATH)
+    except (OSError, ValueError) as error:
+        messagebox.showerror("Load failed", str(error))
+        records = []
 
+    displayed_records: list[dict] = []
     has_unsaved_changes = False
 
     main_frame = ttk.Frame(window, padding=16)
@@ -151,9 +156,13 @@ def create_main_window() -> tk.Tk:
 
     def refresh_records_display() -> None:
         """Refresh the records display list."""
+        nonlocal displayed_records
+
+        displayed_records = get_records(records)
+
         records_list.delete(0, tk.END)
 
-        for record in get_records(records):
+        for record in displayed_records:
             records_list.insert(tk.END, format_record_for_display(record))
 
     def clear_form_fields() -> None:
@@ -194,22 +203,24 @@ def create_main_window() -> tk.Tk:
 
     def handle_search_records() -> None:
         """Search records and display matching results."""
+        nonlocal displayed_records
+
         field = search_field_combo.get()
         value = search_value_entry.get().strip()
 
         try:
-            results = search_records(records, field, value)
+            displayed_records = search_records(records, field, value)
         except ValueError as error:
             messagebox.showerror("Invalid search", str(error))
             return
 
         records_list.delete(0, tk.END)
 
-        if not results:
+        if not displayed_records:
             messagebox.showinfo("No results", "No matching records found.")
             return
 
-        for record in results:
+        for record in displayed_records:
             records_list.insert(tk.END, format_record_for_display(record))
 
     def handle_clear_search() -> None:
@@ -232,7 +243,7 @@ def create_main_window() -> tk.Tk:
             return
 
         selected_index = selected_indices[0]
-        selected_record = get_records(records)[selected_index]
+        selected_record = displayed_records[selected_index]
         record_id = selected_record["id"]
 
         confirmed = messagebox.askyesno(
@@ -258,7 +269,11 @@ def create_main_window() -> tk.Tk:
         """Save records to the data file."""
         nonlocal has_unsaved_changes
 
-        save_records(records, DATA_FILE_PATH)
+        try:
+            save_records(records, DATA_FILE_PATH)
+        except (OSError, ValueError) as error:
+            messagebox.showerror("Save failed", str(error))
+            return
 
         has_unsaved_changes = False
 
@@ -279,10 +294,13 @@ def create_main_window() -> tk.Tk:
             return
 
         if should_save:
-            save_records(records, DATA_FILE_PATH)
+            try:
+                save_records(records, DATA_FILE_PATH)
+            except (OSError, ValueError) as error:
+                messagebox.showerror("Save failed", str(error))
+                return
 
         window.destroy()
-
 
     save_button = ttk.Button(
         form_frame,
