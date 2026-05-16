@@ -1,6 +1,9 @@
 """Unit tests for GUI helper functions."""
 
-from record_management_system.gui import format_record_for_display
+from record_management_system.gui import (
+    build_updated_fields_from_values,
+    format_record_for_display,
+)
 
 
 def test_format_client_record_for_display():
@@ -86,3 +89,58 @@ def test_format_flight_record_for_display():
         "Flight | ID: 3 | Client ID: 1 | Airline ID: 2 | "
         "Date: 2026-05-01 | Start City: London | End City: Paris"
     )
+def test_build_updated_fields_from_values_excludes_id():
+    """Build update fields without including the record ID."""
+
+    field_values = {
+        "id": "1",
+        "name": "Jane Smith",
+        "city": "Manchester",
+        "phone_number": "07987654321",
+    }
+
+    result = build_updated_fields_from_values(field_values)
+
+    assert result == {
+        "name": "Jane Smith",
+        "city": "Manchester",
+        "phone_number": "07987654321",
+    }
+
+
+def test_build_updated_fields_from_values_converts_related_id_fields():
+    """Convert related ID fields to integers for flight updates."""
+
+    field_values = {
+        "id": "3",
+        "client_id": "1",
+        "airline_id": "2",
+        "date": "2026-06-15",
+        "start_city": "Manchester",
+        "end_city": "Madrid",
+    }
+
+    result = build_updated_fields_from_values(field_values)
+
+    assert result == {
+        "client_id": 1,
+        "airline_id": 2,
+        "date": "2026-06-15",
+        "start_city": "Manchester",
+        "end_city": "Madrid",
+    }
+
+
+def test_build_updated_fields_from_values_strips_text_values():
+    """Strip extra spaces from text update fields."""
+
+    field_values = {
+        "id": "2",
+        "company_name": "  Virgin Atlantic  ",
+    }
+
+    result = build_updated_fields_from_values(field_values)
+
+    assert result == {
+        "company_name": "Virgin Atlantic",
+    }
