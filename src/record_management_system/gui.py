@@ -85,9 +85,9 @@ def format_record_for_display(record: dict) -> str:
 
     return " | ".join(display_parts)
 
+
 def convert_form_value(field_name: str, value: str) -> int | str:
     """Convert form input values to the correct data type."""
-
     stripped_value = value.strip()
 
     if field_name.endswith("_id") or field_name == "id":
@@ -98,7 +98,6 @@ def convert_form_value(field_name: str, value: str) -> int | str:
 
 def build_updated_fields_from_values(field_values: dict[str, str]) -> dict:
     """Build update fields from GUI form values, excluding the record ID."""
-
     updated_fields = {}
 
     for field_name, value in field_values.items():
@@ -108,7 +107,8 @@ def build_updated_fields_from_values(field_values: dict[str, str]) -> dict:
         updated_fields[field_name] = convert_form_value(field_name, value)
 
     return updated_fields
-    
+
+
 def create_main_window() -> tk.Tk:
     """Create and configure the main application window."""
     window = tk.Tk()
@@ -205,8 +205,8 @@ def create_main_window() -> tk.Tk:
         }
 
         try:
-           for field_name, entry in field_entries.items():
-    record[field_name] = convert_form_value(field_name, entry.get())
+            for field_name, entry in field_entries.items():
+                record[field_name] = convert_form_value(field_name, entry.get())
 
             create_record(records, record)
 
@@ -247,61 +247,55 @@ def create_main_window() -> tk.Tk:
         search_value_entry.delete(0, tk.END)
         refresh_records_display()
 
-    record_type_combo.bind("<<ComboboxSelected>>", lambda _event: render_form_fields())
+    def handle_load_selected_record_for_update() -> None:
+        """Load the selected record into the form for editing."""
+        selected_indices = records_list.curselection()
 
-    render_form_fields()
-def handle_load_selected_record_for_update() -> None:
-    """Load the selected record into the form for editing."""
+        if not selected_indices:
+            messagebox.showerror("No selection", "Please select a record to update.")
+            return
 
-    selected_indices = records_list.curselection()
+        selected_index = selected_indices[0]
+        selected_record = displayed_records[selected_index]
+        selected_record_type = selected_record["type"].title()
 
-    if not selected_indices:
-        messagebox.showerror("No selection", "Please select a record to update.")
-        return
+        record_type_combo.set(selected_record_type)
+        render_form_fields()
 
-    selected_index = selected_indices[0]
-    selected_record = displayed_records[selected_index]
-    selected_record_type = selected_record["type"].title()
+        for field_name, entry in field_entries.items():
+            entry.delete(0, tk.END)
+            entry.insert(0, str(selected_record.get(field_name, "")))
 
-    record_type_combo.set(selected_record_type)
-    render_form_fields()
+    def handle_update_record() -> None:
+        """Update the selected record using the form values."""
+        nonlocal has_unsaved_changes
 
-    for field_name, entry in field_entries.items():
-        entry.delete(0, tk.END)
-        entry.insert(0, str(selected_record.get(field_name, "")))
+        selected_indices = records_list.curselection()
 
-def handle_update_record() -> None:
-    """Update the selected record using the form values."""
+        if not selected_indices:
+            messagebox.showerror("No selection", "Please select a record to update.")
+            return
 
-    nonlocal has_unsaved_changes
+        selected_index = selected_indices[0]
+        selected_record = displayed_records[selected_index]
+        record_id = selected_record["id"]
 
-    selected_indices = records_list.curselection()
+        field_values = {
+            field_name: entry.get() for field_name, entry in field_entries.items()
+        }
 
-    if not selected_indices:
-        messagebox.showerror("No selection", "Please select a record to update.")
-        return
+        try:
+            updated_fields = build_updated_fields_from_values(field_values)
+            update_record(records, record_id, updated_fields)
+        except ValueError as error:
+            messagebox.showerror("Update failed", str(error))
+            return
 
-    selected_index = selected_indices[0]
-    selected_record = displayed_records[selected_index]
-    record_id = selected_record["id"]
+        has_unsaved_changes = True
+        refresh_records_display()
+        clear_form_fields()
+        messagebox.showinfo("Updated", "Record updated successfully.")
 
-    field_values = {
-        field_name: entry.get()
-        for field_name, entry in field_entries.items()
-    }
-
-    try:
-        updated_fields = build_updated_fields_from_values(field_values)
-        update_record(records, record_id, updated_fields)
-    except ValueError as error:
-        messagebox.showerror("Update failed", str(error))
-        return
-
-    has_unsaved_changes = True
-    refresh_records_display()
-    clear_form_fields()
-    messagebox.showinfo("Updated", "Record updated successfully.")
-    
     def handle_delete_record() -> None:
         """Delete the selected record after user confirmation."""
         nonlocal has_unsaved_changes
@@ -372,18 +366,24 @@ def handle_update_record() -> None:
 
         window.destroy()
 
+    record_type_combo.bind("<<ComboboxSelected>>", lambda _event: render_form_fields())
+
+    render_form_fields()
+
     save_button = ttk.Button(
         form_frame,
         text="Create Record",
         command=handle_create_record,
     )
     save_button.pack(fill="x", pady=(4, 0))
-update_button = ttk.Button(
-    form_frame,
-    text="Update Selected Record",
-    command=handle_update_record,
-)
-update_button.pack(fill="x", pady=(8, 0))
+
+    update_button = ttk.Button(
+        form_frame,
+        text="Update Selected Record",
+        command=handle_update_record,
+    )
+    update_button.pack(fill="x", pady=(8, 0))
+
     search_frame = ttk.LabelFrame(records_frame, text="Search Records", padding=8)
     search_frame.pack(fill="x", pady=(0, 12))
 
@@ -395,7 +395,6 @@ update_button.pack(fill="x", pady=(8, 0))
         values=sorted(ALLOWED_SEARCH_FIELDS),
         state="readonly",
     )
-
     search_field_combo.set("id")
     search_field_combo.pack(fill="x", pady=(2, 8))
 
@@ -421,12 +420,14 @@ update_button.pack(fill="x", pady=(8, 0))
 
     records_list = tk.Listbox(records_frame)
     records_list.pack(fill="both", expand=True)
-load_update_button = ttk.Button(
-    records_frame,
-    text="Load Selected Record for Update",
-    command=handle_load_selected_record_for_update,
-)
-load_update_button.pack(fill="x", pady=(8, 0))
+
+    load_update_button = ttk.Button(
+        records_frame,
+        text="Load Selected Record for Update",
+        command=handle_load_selected_record_for_update,
+    )
+    load_update_button.pack(fill="x", pady=(8, 0))
+
     delete_button = ttk.Button(
         records_frame,
         text="Delete Selected Record",
