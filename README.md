@@ -1,35 +1,34 @@
 # Travel Record Management App
 
-## Project Overview
+Travel Record Management App is a desktop CRUD application for a specialist
+travel agent.
 
-Travel Record Management App is a GUI based record management system for a specialist travel agent.
-
-The application manages three types of records:
+It manages three record types:
 
 1. Client records
 2. Airline company records
 3. Flight records
 
-The application allows users to create, update, delete, search, and display records through a graphical user interface.
+The application uses a Tkinter GUI, stores records internally as a list of
+dictionaries, and persists data to JSON.
 
-## Current Project Status
+## Current Features
 
-The project currently includes:
+The application currently supports:
 
-1. Backend record management logic
-2. Tkinter GUI for creating and displaying records
-3. JSON file storage logic
-4. Unit tests for record logic, GUI helper logic, and storage logic
-5. Ruff linting configuration
-6. Git hooks for pre commit checks and commit message validation
-
-The current GUI implementation covers the Create Records and Display/Get Records scope.
-
-Search, update, delete, and file storage integration are handled as separate task areas or later integration work.
+1. Creating client, airline, and flight records
+2. Viewing records in the GUI
+3. Searching records
+4. Updating existing records
+5. Deleting records with confirmation
+6. Loading records from file when the application starts
+7. Saving records to file on demand and when closing with unsaved changes
+8. Shared validation for create, update, and storage loading
+9. Unit tests for record logic, search, storage, and GUI helper logic
 
 ## Assignment Requirements
 
-The application must support the following actions:
+The project is built around these core requirements:
 
 1. Create a record
 2. Delete a record
@@ -47,18 +46,33 @@ records = [
     {
         "id": 1,
         "type": "client",
-        "name": "Example Client"
+        "name": "Example Client",
     }
 ]
 ```
 
 The current file storage implementation uses JSON.
 
+## Architecture Overview
+
+The codebase is split into small modules with focused responsibilities:
+
+- `schema.py`: central definitions for record types, fields, labels, and search
+  rules
+- `validation.py`: shared validation used by create, update, and storage load
+- `records.py`: record CRUD and search logic
+- `storage.py`: JSON file persistence
+- `gui_helpers.py`: pure helper functions for formatting and form conversion
+- `gui_actions.py`: GUI-facing actions that connect the interface to backend
+  logic
+- `gui.py`: Tkinter window layout and event handling
+- `main.py`: application entry point
+
+This structure keeps domain rules reusable and helps the GUI stay thinner.
+
 ## Record Types
 
 ### Client Record
-
-A client record contains the following fields:
 
 | Field          | Type    |
 | -------------- | ------- |
@@ -76,8 +90,6 @@ A client record contains the following fields:
 
 ### Airline Record
 
-An airline record contains the following fields:
-
 | Field        | Type    |
 | ------------ | ------- |
 | ID           | Integer |
@@ -85,8 +97,6 @@ An airline record contains the following fields:
 | Company Name | String  |
 
 ### Flight Record
-
-A flight record contains the following fields:
 
 | Field      | Type      |
 | ---------- | --------- |
@@ -97,44 +107,6 @@ A flight record contains the following fields:
 | Date       | Date/time |
 | Start City | String    |
 | End City   | String    |
-
-## Initial User Stories
-
-### Client Records
-
-- As a travel agent user, I want to create a client record so that client details can be stored in the system.
-
-- As a travel agent user, I want to update a client record so that incorrect or outdated client details can be corrected.
-
-- As a travel agent user, I want to delete a client record so that records that are no longer required can be removed.
-
-- As a travel agent user, I want to search for a client record so that I can quickly find client information.
-
-### Airline Records
-
-- As a travel agent user, I want to create an airline company record so that airline details can be stored in the system.
-
-- As a travel agent user, I want to update an airline company record so that company details remain accurate.
-
-- As a travel agent user, I want to delete an airline company record so that unused airline records can be removed.
-
-- As a travel agent user, I want to search for an airline company record so that I can quickly find airline information.
-
-### Flight Records
-
-- As a travel agent user, I want to create a flight record so that a client can be linked to an airline and journey details.
-
-- As a travel agent user, I want to update a flight record so that journey details can be corrected.
-
-- As a travel agent user, I want to delete a flight record so that cancelled or incorrect flight records can be removed.
-
-- As a travel agent user, I want to search for a flight record so that I can quickly find journey information.
-
-### Data Storage
-
-- As a travel agent user, I want records to be saved when the application closes so that data is not lost.
-
-- As a travel agent user, I want existing records to be loaded when the application starts so that I can continue working with previously saved data.
 
 ## Project Structure
 
@@ -149,13 +121,20 @@ travel-record-management-app/
 │   └── record_management_system/
 │       ├── __init__.py
 │       ├── gui.py
+│       ├── gui_actions.py
+│       ├── gui_helpers.py
 │       ├── main.py
 │       ├── records.py
-│       └── storage.py
+│       ├── schema.py
+│       ├── storage.py
+│       └── validation.py
 ├── tests/
 │   ├── __init__.py
+│   ├── conftest.py
+│   ├── factories.py
 │   ├── test_gui.py
 │   ├── test_records.py
+│   ├── test_search.py
 │   └── test_storage.py
 ├── .gitignore
 ├── .python-version
@@ -165,62 +144,11 @@ travel-record-management-app/
 └── requirements.txt
 ```
 
-## Main Modules
-
-### `records.py`
-
-Contains the core record management logic.
-
-Current responsibilities include:
-
-```txt
-Create records
-Get/display records
-Search records
-Update records
-Delete records
-Validate record types
-Validate required fields
-Check duplicate record IDs
-```
-
-### `gui.py`
-
-Contains the Tkinter graphical user interface.
-
-Current responsibilities include:
-
-```txt
-Create the main application window
-Show the Create Record form
-Allow the user to select Client, Airline, or Flight records
-Render dynamic input fields for each record type
-Call the backend create_record function
-Use the backend get_records function when refreshing the display
-Display created records in the records list
-Format records for display
-Show success and error messages to the user
-```
-
-### `storage.py`
-
-Contains file storage logic for record data.
-
-Current responsibilities include:
-
-```txt
-Save records to a JSON file
-Load records from a JSON file
-Return an empty list when no data file exists
-Create parent directories when saving
-Validate that loaded data is a list
-```
-
 ## Development Environment
 
-This project uses Python 3.14.
+This project targets Python 3.14.
 
-The Python version is documented in:
+The expected version is documented in:
 
 ```txt
 .python-version
@@ -246,6 +174,12 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
+Enable the repository Git hooks:
+
+```bash
+git config core.hooksPath .githooks
+```
+
 ## Running the Application
 
 Run the application from the repository root with:
@@ -254,17 +188,18 @@ Run the application from the repository root with:
 PYTHONPATH=src python -m record_management_system.main
 ```
 
-The project uses a `src` layout, so `PYTHONPATH=src` is needed when running the application directly from the repository root.
+The project uses a `src` layout, so `PYTHONPATH=src` is needed when running
+the app directly from the repository root.
 
 ## GUI Framework
 
 The project uses vanilla Tkinter for the graphical user interface.
 
-Tkinter was chosen because it is included with standard Python installations and is suitable for a small desktop CRUD application.
+Tkinter was chosen because it is included with standard Python installations
+and is suitable for a small desktop CRUD application.
 
-On some macOS/Homebrew Python installations, Tkinter may need to be installed separately.
-
-If the application fails with an error such as:
+On some macOS or Homebrew Python installations, Tkinter may need to be
+installed separately. If the application fails with an error such as:
 
 ```txt
 ModuleNotFoundError: No module named '_tkinter'
@@ -276,25 +211,40 @@ install the matching Tkinter package:
 brew install python-tk@3.14
 ```
 
+## Data Storage
+
+Records are stored in:
+
+```txt
+data/records.json
+```
+
+Storage behavior:
+
+1. If the file does not exist, the application starts with an empty list
+2. If the file exists, records are loaded at startup
+3. Parent directories are created automatically when saving
+4. Loaded data is validated before use
+
 ## Testing
 
-Run all tests with:
+Run the full test suite with:
 
 ```bash
 python -m pytest
 ```
 
-Current test files:
+The test suite includes:
 
-```txt
-tests/test_records.py
-tests/test_gui.py
-tests/test_storage.py
-```
+- record CRUD tests
+- search tests
+- storage tests
+- GUI helper tests
+- shared fixtures and record factories for reusable test data
 
 ## Linting
 
-This project uses Ruff to support PEP 8 style checks and general Python code quality.
+This project uses Ruff for style and code quality checks.
 
 Run Ruff with:
 
