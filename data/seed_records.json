@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "type": "client",
+    "name": "John Smith",
+    "address_line_1": "10 Example Street",
+    "address_line_2": "",
+    "address_line_3": "",
+    "city": "London",
+    "state": "",
+    "zip_code": "SW1A 1AA",
+    "country": "United Kingdom",
+    "phone_number": "07123456789"
+  },
+  {
+    "id": 2,
+    "type": "client",
+    "name": "Aisha Khan",
+    "address_line_1": "42 Market Road",
+    "address_line_2": "Flat 5B",
+    "address_line_3": "",
+    "city": "Manchester",
+    "state": "Greater Manchester",
+    "zip_code": "M1 4AB",
+    "country": "United Kingdom",
+    "phone_number": "+447700900123"
+  },
+  {
+    "id": 3,
+    "type": "client",
+    "name": "Luca Rossi",
+    "address_line_1": "18 Via Roma",
+    "address_line_2": "",
+    "address_line_3": "",
+    "city": "Milan",
+    "state": "Lombardy",
+    "zip_code": "20121",
+    "country": "Italy",
+    "phone_number": "00390212345678"
+  },
+  {
+    "id": 10,
+    "type": "airline",
+    "company_name": "British Airways"
+  },
+  {
+    "id": 11,
+    "type": "airline",
+    "company_name": "Lufthansa"
+  },
+  {
+    "id": 12,
+    "type": "airline",
+    "company_name": "Emirates"
+  },
+  {
+    "id": 20,
+    "type": "flight",
+    "client_id": 1,
+    "airline_id": 10,
+    "date": "2026-05-01",
+    "start_city": "London",
+    "end_city": "Paris"
+  },
+  {
+    "id": 21,
+    "type": "flight",
+    "client_id": 2,
+    "airline_id": 11,
+    "date": "2026-06-14",
+    "start_city": "Manchester",
+    "end_city": "Berlin"
+  },
+  {
+    "id": 22,
+    "type": "flight",
+    "client_id": 3,
+    "airline_id": 12,
+    "date": "2026-07-22",
+    "start_city": "Milan",
+    "end_city": "Dubai"
+  },
+  {
+    "id": 23,
+    "type": "flight",
+    "client_id": 1,
+    "airline_id": 11,
+    "date": "2026-09-05",
+    "start_city": "London",
+    "end_city": "Munich"
+  }
+]

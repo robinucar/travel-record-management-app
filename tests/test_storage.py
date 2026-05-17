@@ -43,6 +43,20 @@ def test_load_records_returns_empty_list_when_file_missing(tmp_path):
     assert result == []
 
 
+def test_load_records_uses_seed_file_when_primary_file_is_missing(tmp_path):
+    """Load seed records when the primary records file does not exist."""
+    file_path = tmp_path / "records.json"
+    seed_file_path = tmp_path / "seed_records.json"
+    seed_records = [make_client_record()]
+
+    with seed_file_path.open("w", encoding="utf-8") as file:
+        json.dump(seed_records, file)
+
+    result = load_records(file_path, seed_file_path)
+
+    assert result == seed_records
+
+
 def test_save_records_creates_parent_directory(tmp_path):
     """Create the parent directory when saving records."""
     file_path = tmp_path / "data" / "records.json"

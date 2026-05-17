@@ -16,9 +16,12 @@ from record_management_system.records import (
 from record_management_system.storage import load_records, save_records
 
 
-def load_records_from_file(file_path: str | Path) -> list[dict]:
+def load_records_from_file(
+    file_path: str | Path,
+    fallback_file_path: str | Path | None = None,
+) -> list[dict]:
     """Load records for the GUI from the configured data file."""
-    return load_records(file_path)
+    return load_records(file_path, fallback_file_path)
 
 
 def save_records_to_file(records: list[dict], file_path: str | Path) -> None:
