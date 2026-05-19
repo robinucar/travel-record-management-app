@@ -24,6 +24,7 @@ from record_management_system.schema import (
 )
 
 DATA_FILE_PATH = Path("data/records.json")
+SEED_FILE_PATH = Path("data/seed_records.json")
 
 
 def create_main_window() -> tk.Tk:
@@ -34,7 +35,10 @@ def create_main_window() -> tk.Tk:
     window.minsize(900, 800)
 
     try:
-        records: list[dict] = load_records_from_file(DATA_FILE_PATH)
+        records: list[dict] = load_records_from_file(
+            DATA_FILE_PATH,
+            SEED_FILE_PATH,
+        )
     except (OSError, ValueError) as error:
         messagebox.showerror("Load failed", str(error))
         records = []

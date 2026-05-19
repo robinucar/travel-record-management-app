@@ -6,12 +6,23 @@ from pathlib import Path
 from record_management_system.validation import validate_records_collection
 
 
-def load_records(file_path: str | Path) -> list[dict]:
-    """Load records from a JSON file."""
+def load_records(
+    file_path: str | Path,
+    fallback_file_path: str | Path | None = None,
+) -> list[dict]:
+    """Load records from a JSON file, with optional fallback seed data."""
     path = Path(file_path)
 
     if not path.exists():
-        return []
+        if fallback_file_path is None:
+            return []
+
+        fallback_path = Path(fallback_file_path)
+
+        if not fallback_path.exists():
+            return []
+
+        path = fallback_path
 
     try:
         with path.open(encoding="utf-8") as file:
