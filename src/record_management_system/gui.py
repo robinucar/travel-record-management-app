@@ -4,109 +4,27 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox, ttk
 
-from record_management_system.records import (
-    ALLOWED_SEARCH_FIELDS,
-    REQUIRED_FIELDS_BY_RECORD_TYPE,
-    create_record,
-    delete_record,
-    get_records,
-    search_records,
-    update_record,
+from record_management_system.gui_actions import (
+    create_record_from_values,
+    delete_record_by_id,
+    get_records_for_display,
+    load_records_from_file,
+    save_records_to_file,
+    search_records_by_field,
+    update_record_from_values,
 )
-from record_management_system.storage import (
-    load_records,
-    save_records,
+from record_management_system.gui_helpers import format_record_for_display
+from record_management_system.schema import (
+    ALLOWED_SEARCH_FIELDS,
+    DISPLAY_FIELDS_BY_RECORD_TYPE,
+    FIELD_LABELS,
+    RECORD_SCHEMAS,
+    RECORD_TYPE_DISPLAY_NAMES,
+    get_record_type_from_display_name,
 )
 
 DATA_FILE_PATH = Path("data/records.json")
-
-FIELDS_BY_RECORD_TYPE = {
-    "Client": [
-        "id",
-        "name",
-        "address_line_1",
-        "address_line_2",
-        "address_line_3",
-        "city",
-        "state",
-        "zip_code",
-        "country",
-        "phone_number",
-    ],
-    "Airline": [
-        "id",
-        "company_name",
-    ],
-    "Flight": [
-        "id",
-        "client_id",
-        "airline_id",
-        "date",
-        "start_city",
-        "end_city",
-    ],
-}
-
-FIELD_LABELS = {
-    "id": "ID",
-    "type": "Type",
-    "name": "Name",
-    "address_line_1": "Address Line 1",
-    "address_line_2": "Address Line 2",
-    "address_line_3": "Address Line 3",
-    "city": "City",
-    "state": "State",
-    "zip_code": "Zip Code",
-    "country": "Country",
-    "phone_number": "Phone Number",
-    "company_name": "Company Name",
-    "client_id": "Client ID",
-    "airline_id": "Airline ID",
-    "date": "Date",
-    "start_city": "Start City",
-    "end_city": "End City",
-}
-
-
-def format_record_for_display(record: dict) -> str:
-    """Format a record for display in the records list."""
-    record_type = record["type"]
-    display_fields = FIELDS_BY_RECORD_TYPE[record_type.title()]
-    required_fields = REQUIRED_FIELDS_BY_RECORD_TYPE[record_type]
-
-    display_parts = [record_type.title()]
-
-    for field_name in display_fields:
-        value = record.get(field_name, "")
-
-        if field_name in required_fields or str(value).strip():
-            label = FIELD_LABELS[field_name]
-            display_parts.append(f"{label}: {value}")
-
-    return " | ".join(display_parts)
-
-
-def convert_form_value(field_name: str, value: str) -> int | str:
-    """Convert form input values to the correct data type."""
-    stripped_value = value.strip()
-
-    if field_name.endswith("_id") or field_name == "id":
-        return int(stripped_value)
-
-    return stripped_value
-
-
-def build_updated_fields_from_values(field_values: dict[str, str]) -> dict:
-    """Build update fields from GUI form values, excluding the record ID."""
-    updated_fields = {}
-
-    for field_name, value in field_values.items():
-        if field_name == "id":
-            continue
-
-        updated_fields[field_name] = convert_form_value(field_name, value)
-
-    return updated_fields
+SEED_FILE_PATH = Path("data/seed_records.json")
 
 
 def create_main_window() -> tk.Tk:
@@ -117,7 +35,10 @@ def create_main_window() -> tk.Tk:
     window.minsize(900, 800)
 
     try:
-        records: list[dict] = load_records(DATA_FILE_PATH)
+        records: list[dict] = load_records_from_file(
+            DATA_FILE_PATH,
+            SEED_FILE_PATH,
+        )
     except (OSError, ValueError) as error:
         messagebox.showerror("Load failed", str(error))
         records = []
@@ -149,16 +70,30 @@ def create_main_window() -> tk.Tk:
 
     record_type_combo = ttk.Combobox(
         form_frame,
-        values=["Client", "Airline", "Flight"],
+        values=RECORD_TYPE_DISPLAY_NAMES,
         state="readonly",
     )
-    record_type_combo.set("Client")
+    record_type_combo.set(RECORD_TYPE_DISPLAY_NAMES[0])
     record_type_combo.pack(fill="x", pady=(4, 12))
 
     fields_frame = ttk.Frame(form_frame)
     fields_frame.pack(fill="x", pady=(0, 12))
 
     field_entries: dict[str, ttk.Entry] = {}
+
+    def get_field_values() -> dict[str, str]:
+        """Return the current form values keyed by field name."""
+        return {
+            field_name: entry.get()
+            for field_name, entry in field_entries.items()
+        }
+
+    def render_records_list(records_to_display: list[dict]) -> None:
+        """Render the given records in the list widget."""
+        records_list.delete(0, tk.END)
+
+        for record in records_to_display:
+            records_list.insert(tk.END, format_record_for_display(record))
 
     def render_form_fields() -> None:
         """Render input fields for the selected record type."""
@@ -167,9 +102,10 @@ def create_main_window() -> tk.Tk:
 
         field_entries.clear()
 
-        selected_record_type = record_type_combo.get()
+        selected_display_name = record_type_combo.get()
+        record_type = get_record_type_from_display_name(selected_display_name)
 
-        for field_name in FIELDS_BY_RECORD_TYPE[selected_record_type]:
+        for field_name in DISPLAY_FIELDS_BY_RECORD_TYPE[record_type]:
             label = ttk.Label(fields_frame, text=FIELD_LABELS[field_name])
             label.pack(anchor="w")
 
@@ -181,13 +117,8 @@ def create_main_window() -> tk.Tk:
     def refresh_records_display() -> None:
         """Refresh the records display list."""
         nonlocal displayed_records
-
-        displayed_records = get_records(records)
-
-        records_list.delete(0, tk.END)
-
-        for record in displayed_records:
-            records_list.insert(tk.END, format_record_for_display(record))
+        displayed_records = get_records_for_display(records)
+        render_records_list(displayed_records)
 
     def clear_form_fields() -> None:
         """Clear all form input fields."""
@@ -197,50 +128,35 @@ def create_main_window() -> tk.Tk:
     def handle_create_record() -> None:
         """Create a record from the form values and refresh the display."""
         nonlocal has_unsaved_changes
-
-        selected_record_type = record_type_combo.get()
-
-        record = {
-            "type": selected_record_type.lower(),
-        }
+        record_type = get_record_type_from_display_name(record_type_combo.get())
 
         try:
-            for field_name, entry in field_entries.items():
-                record[field_name] = convert_form_value(field_name, entry.get())
-
-            create_record(records, record)
-
-            has_unsaved_changes = True
-
-            refresh_records_display()
-            clear_form_fields()
-
-            messagebox.showinfo("Success", "Record created successfully.")
-
+            create_record_from_values(records, record_type, get_field_values())
         except ValueError as error:
             messagebox.showerror("Invalid record", str(error))
+            return
+
+        has_unsaved_changes = True
+        refresh_records_display()
+        clear_form_fields()
+        messagebox.showinfo("Success", "Record created successfully.")
 
     def handle_search_records() -> None:
         """Search records and display matching results."""
         nonlocal displayed_records
-
         field = search_field_combo.get()
-        value = search_value_entry.get().strip()
+        value = search_value_entry.get()
 
         try:
-            displayed_records = search_records(records, field, value)
+            displayed_records = search_records_by_field(records, field, value)
         except ValueError as error:
             messagebox.showerror("Invalid search", str(error))
             return
 
-        records_list.delete(0, tk.END)
+        render_records_list(displayed_records)
 
         if not displayed_records:
             messagebox.showinfo("No results", "No matching records found.")
-            return
-
-        for record in displayed_records:
-            records_list.insert(tk.END, format_record_for_display(record))
 
     def handle_clear_search() -> None:
         """Clear search input and show all records."""
@@ -255,11 +171,9 @@ def create_main_window() -> tk.Tk:
             messagebox.showerror("No selection", "Please select a record to update.")
             return
 
-        selected_index = selected_indices[0]
-        selected_record = displayed_records[selected_index]
-        selected_record_type = selected_record["type"].title()
-
-        record_type_combo.set(selected_record_type)
+        selected_record = displayed_records[selected_indices[0]]
+        record_type = selected_record["type"]
+        record_type_combo.set(RECORD_SCHEMAS[record_type].display_name)
         render_form_fields()
 
         for field_name, entry in field_entries.items():
@@ -269,24 +183,20 @@ def create_main_window() -> tk.Tk:
     def handle_update_record() -> None:
         """Update the selected record using the form values."""
         nonlocal has_unsaved_changes
-
         selected_indices = records_list.curselection()
 
         if not selected_indices:
             messagebox.showerror("No selection", "Please select a record to update.")
             return
 
-        selected_index = selected_indices[0]
-        selected_record = displayed_records[selected_index]
-        record_id = selected_record["id"]
-
-        field_values = {
-            field_name: entry.get() for field_name, entry in field_entries.items()
-        }
+        selected_record = displayed_records[selected_indices[0]]
 
         try:
-            updated_fields = build_updated_fields_from_values(field_values)
-            update_record(records, record_id, updated_fields)
+            update_record_from_values(
+                records,
+                selected_record["id"],
+                get_field_values(),
+            )
         except ValueError as error:
             messagebox.showerror("Update failed", str(error))
             return
@@ -299,17 +209,13 @@ def create_main_window() -> tk.Tk:
     def handle_delete_record() -> None:
         """Delete the selected record after user confirmation."""
         nonlocal has_unsaved_changes
-
         selected_indices = records_list.curselection()
 
         if not selected_indices:
             messagebox.showerror("No selection", "Please select a record to delete.")
             return
 
-        selected_index = selected_indices[0]
-        selected_record = displayed_records[selected_index]
-        record_id = selected_record["id"]
-
+        selected_record = displayed_records[selected_indices[0]]
         confirmed = messagebox.askyesno(
             "Confirm delete",
             "Are you sure you want to delete this record?",
@@ -319,29 +225,32 @@ def create_main_window() -> tk.Tk:
             return
 
         try:
-            delete_record(records, record_id)
+            delete_record_by_id(records, selected_record["id"])
         except ValueError as error:
             messagebox.showerror("Delete failed", str(error))
             return
 
         has_unsaved_changes = True
-
         refresh_records_display()
         messagebox.showinfo("Deleted", "Record deleted successfully.")
 
-    def handle_save_records() -> None:
-        """Save records to the data file."""
+    def save_with_feedback() -> bool:
+        """Save records and surface any save error to the user."""
         nonlocal has_unsaved_changes
 
         try:
-            save_records(records, DATA_FILE_PATH)
+            save_records_to_file(records, DATA_FILE_PATH)
         except (OSError, ValueError) as error:
             messagebox.showerror("Save failed", str(error))
-            return
+            return False
 
         has_unsaved_changes = False
+        return True
 
-        messagebox.showinfo("Saved", "Records saved successfully.")
+    def handle_save_records() -> None:
+        """Save records to the data file."""
+        if save_with_feedback():
+            messagebox.showinfo("Saved", "Records saved successfully.")
 
     def handle_window_close() -> None:
         """Close the application, prompting only if there are unsaved changes."""
@@ -357,17 +266,12 @@ def create_main_window() -> tk.Tk:
         if should_save is None:
             return
 
-        if should_save:
-            try:
-                save_records(records, DATA_FILE_PATH)
-            except (OSError, ValueError) as error:
-                messagebox.showerror("Save failed", str(error))
-                return
+        if should_save and not save_with_feedback():
+            return
 
         window.destroy()
 
     record_type_combo.bind("<<ComboboxSelected>>", lambda _event: render_form_fields())
-
     render_form_fields()
 
     save_button = ttk.Button(
@@ -443,6 +347,5 @@ def create_main_window() -> tk.Tk:
     save_records_button.pack(fill="x", pady=(8, 0))
 
     refresh_records_display()
-
     window.protocol("WM_DELETE_WINDOW", handle_window_close)
     return window

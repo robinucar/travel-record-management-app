@@ -27,6 +27,7 @@ data/*.pickle
 
 # Keep data folder
 !data/.gitkeep
+!data/seed_records.json
 
 # Ruff
 .ruff_cache/
